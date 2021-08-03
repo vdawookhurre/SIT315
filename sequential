@@ -1,0 +1,105 @@
+#include<iostream>
+#include <fstream>
+#include <string>
+#include <chrono>
+
+using namespace std;
+
+#define N 200
+
+long a[N][N], b[N][N], c[N][N];
+
+// Source: https://stackoverflow.com/questions/728068/how-to-calculate-a-time-difference-in-c
+class Timer
+{
+public:
+    Timer() : beg_(clock_::now()) {}
+    void reset() { beg_ = clock_::now(); }
+    double elapsed() const {
+        return chrono::duration_cast<second_>
+            (clock_::now() - beg_).count(); }
+
+private:
+    typedef chrono::high_resolution_clock clock_;
+    typedef chrono::duration<double, ratio<1> > second_;
+    chrono::time_point<clock_> beg_;
+};
+
+//fill the given matrix with random numbers
+void Matrix(long a[][N])
+{
+   for(int i = 0; i < N; ++i)
+  {
+     for(int j = 0;  j < N; ++j)
+     {
+        a[i][j] = rand() % 100;
+        
+      }
+  }
+}
+//Multiplying the row a with the column b and returning the product of it
+long Multiplication_RC (long a[], long b[][N],long col)
+{
+   
+   long product = 0;
+
+    for (int i=0; i<N; i++) 
+    {
+        product += (a[i] * b[i][col]);
+    }
+
+    return product;
+}
+//Multiplying the matrices a and b, then storing the result in matrix c
+void MultiplicationMatrix(long a[][N], long b[][N], long c[][N])
+{
+   
+    for (int row=0; row<N; row++) 
+    {
+        for (int col=0; col<N; col++) 
+        {
+            c[col][row] = Multiplication_RC(a[row], b, col);
+            //cout<<c[col][row]<< '\t'<<endl;
+        }
+    }
+        
+}
+
+//reference to this part is from : https://www.tutorialspoint.com/cplusplus/cpp_files_streams.htm
+// Writes the given matrix to file.
+void persistToFile(string path, long m[][N]) {
+    //open a file in write mode
+    ofstream outfile; 
+    outfile.open("Sequential.txt");
+
+    for (int i=0; i<N; i++) {
+        for (int j=0; j<N; j++) {
+            outfile << m[i][j] << " "; //write output data to file
+        }
+
+        outfile << endl;
+    }
+    //close all the opened files
+    outfile.close();
+}
+
+int main()
+{
+ 
+ 
+ Matrix(a);
+
+ Matrix(b);
+
+ Timer tmr;
+
+ MultiplicationMatrix(a,b,c);
+ 
+ double time = tmr.elapsed();
+
+ persistToFile("Sequential.txt", c); //writing output of c int the Matrix.txt file
+ 
+ cout << "Elapsed time: " << (time * 1000) << " Seconds" << endl;
+ 
+ return 0;
+}
