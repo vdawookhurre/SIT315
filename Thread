@@ -1,0 +1,110 @@
+#include<iostream>
+#include <fstream>
+#include <string>
+#include <chrono>
+#include<pthread.h>
+#include <math.h>
+
+using namespace std;
+
+#define N 200
+#define THREADS 4
+
+long a[N][N], b[N][N], c[N][N];
+int step_i = 0;
+
+// Source: https://stackoverflow.com/questions/728068/how-to-calculate-a-time-difference-in-c
+class Timer
+{
+public:
+    Timer() : beg_(clock_::now()) {}
+    void reset() { beg_ = clock_::now(); }
+    double elapsed() const {
+        return chrono::duration_cast<second_>
+            (clock_::now() - beg_).count(); }
+
+private:
+    typedef chrono::high_resolution_clock clock_;
+    typedef chrono::duration<double, ratio<1> > second_;
+    chrono::time_point<clock_> beg_;
+};
+
+//fill the given matrix with random numbers
+void Matrix(long a[][N])
+{
+   for(int i = 0; i < N; ++i)
+  {
+     for(int j = 0;  j < N; ++j)
+     {
+        a[i][j] = rand() % 100;
+        
+      }
+  }
+}
+void* Multiplication(void* arg)
+{
+    int core = step_i++;
+  
+    // Each thread computes 1/4th of matrix multiplication
+    for (int i = core * N / 4; i < (core + 1) * N / 4; i++) 
+        for (int j = 0; j < N; j++) 
+            for (int k = 0; k < N; k++)
+            {
+                c[i][j] += a[i][k] * b[k][j];
+            } 
+                
+}
+
+//reference to this part is from : https://www.tutorialspoint.com/cplusplus/cpp_files_streams.htm
+// Writes the given matrix to file.
+void persistToFile(string path, long m[][N]) {
+    //open a file in write mode
+    ofstream outfile; 
+    outfile.open("Thread.txt");
+
+    for (int i=0; i<N; i++) {
+        for (int j=0; j<N; j++) {
+            outfile << m[i][j] << " "; //write output data to file
+        }
+
+        outfile << endl;
+    }
+    //close all the opened files
+    outfile.close();
+}
+
+int main()
+{
+ 
+ 
+ Matrix(a);
+
+ Matrix(b);
+
+ Timer tmr;
+
+ //reference for threads: https://www.geeksforgeeks.org/multiplication-of-matrix-using-threads/
+
+ // declaring four threads
+    pthread_t threads[THREADS];
+ // Creating four threads, each evaluating its own part
+    for (int i = 0; i < THREADS; i++) 
+    {
+        int* p;
+        pthread_create(&threads[i], NULL, Multiplication, (void*)(p));
+    }
+
+    // joining and waiting for all threads to complete
+    for (int i = 0; i < THREADS; i++)
+    {
+        pthread_join(threads[i], NULL);
+    }       
+ 
+ double time = tmr.elapsed();
+
+ persistToFile("Thread.txt", c); //writing output of c int the Matrix.txt file
+ 
+ cout << "Elapsed time: " << (time * 1000) << " Seconds" << endl;
+ 
+ return 0;
+}
